@@ -152,7 +152,9 @@
     <ClInclude Include="MpClient_dll\BuildNumber.h" />
     <ClInclude Include="MpClient_dll\CMpSampleHeaderContext.h" />
     <ClInclude Include="MpClient_dll\CSharedHashCache.h" />
+    <ClInclude Include="MpClient_dll\MpScanResults.h" />
     <ClInclude Include="MpClient_dll\Trace.h" />
+    <ClInclude Include="MpClient_dll\TraceRequest.h" />
     <ClInclude Include="MpClient_dll\TraceWrappers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

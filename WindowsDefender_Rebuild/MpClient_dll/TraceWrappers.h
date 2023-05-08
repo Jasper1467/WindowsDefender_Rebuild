@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include <emmintrin.h>
 #include <Windows.h>
-#include <evntrace.h>
+
+#include "TraceRequest.h"
 
 inline __int64 GetUnknownLastError()
 {
@@ -20,7 +21,7 @@ inline __int64 GetUnknownLastError()
 }
 
 // SIG: MpClient.dll 48 83 EC 58 45 33 DB
-inline ULONG TraceMessageWrapper(TRACEHANDLE LoggerHandle, USHORT a2, const GUID* a3, const wchar_t* a4, ...)
+inline ULONG Trace_TraceMessageWrapper(TRACEHANDLE LoggerHandle, USHORT a2, const GUID* a3, const wchar_t* a4, ...)
 {
 	__int64 v5; // rax
 	__int64 v6; // rcx
@@ -48,7 +49,7 @@ inline ULONG TraceMessageWrapper(TRACEHANDLE LoggerHandle, USHORT a2, const GUID
 }
 
 // SIG: MpClient.dll 4C 8B DC 45 89 4B 20 48 83 EC 48
-ULONG __fastcall TraceMessageWrapper_0(TRACEHANDLE LoggerHandle, USHORT MessageNumber,
+inline ULONG __fastcall Trace_TraceMessageWrapper_0(TRACEHANDLE LoggerHandle, USHORT MessageNumber,
 	const GUID* MessageGuid, int a4)
 {
 	int v5; // [rsp+68h] [rbp+20h] BYREF
@@ -56,34 +57,42 @@ ULONG __fastcall TraceMessageWrapper_0(TRACEHANDLE LoggerHandle, USHORT MessageN
 	return TraceMessage(LoggerHandle, 0x2Bu, MessageGuid, MessageNumber, &v5, 4, 0);
 }
 
+inline ULONG __fastcall Trace_TraceMessageWrapper_1(TRACEHANDLE LoggerHandle, USHORT MessageNumber,
+	const GUID* MessageGuid)
+{
+	return TraceMessage(LoggerHandle, 0x2Bu, MessageGuid, MessageNumber, 0);
+}
+
 // SIG: MpClient.dll 48 89 5C 24 08 57 48 83 EC 30 41
-inline __int64 __fastcall RegSetValueWrapper(HKEY hKey, LPCWSTR lpValueName, DWORD dwType,
+inline __int64 __fastcall Trace_RegSetValueWrapper(HKEY hKey, LPCWSTR lpValueName, DWORD dwType,
 	__int64 cbData, BYTE* lpData)
 {
 	__int64 result; // rax
 	LSTATUS lpStatus; // ebx
+	BYTE* lpDataa; // [rsp+20h] [rbp-18h]
 
-	if (cbData != cbData) // Huh? I swear this is copied from ida
+	if (cbData != cbData) // Bruh ida...
 		return 0x80070057;
 
 	lpStatus = RegSetValueExW(hKey, lpValueName, 0, dwType, lpData, cbData);
 	if (!lpStatus)
-		return 0;
-
-	if (*&g_TraceGuidRequestContext != &g_TraceGuidRequestContext // Huh, ida again...
-		&& (*(*&g_TraceGuidRequestContext + 28) & 1) != 0)
+		return 0i64;
+	if (g_pTraceGuidRequestContext != &g_pTraceGuidRequestContext
+		&& (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) != 0)
 	{
-		TraceMessageWrapper(*(*&g_TraceGuidRequestContext + 16), lpStatus);
+		LODWORD(lpDataa) = lpStatus;
+		Trace_TraceMessageWrapper(
+			g_pTraceGuidRequestContext->m_hTraceLoggerHandle,
+			0x18u,
+			&stru_75B8AF638,
+			lpValueName,
+			lpDataa);
 	}
-
 	result = lpStatus | 0x80070000;
-
 	if (lpStatus <= 0)
 		result = lpStatus;
-
 	if (result >= 0)
-		return 0;
-
+		return 0i64;
 	_mm_lfence();
 	return result;
 }
@@ -117,76 +126,113 @@ inline const GUID g_WrapperGuid_0 = GUID(
 	{ 0x0DC, 0x23, 0x75, 0x9A, 0x0E9, 0x0BE, 0x7E, 0x2B }// Data 4
 );
 
-// Is only used in sub_75B8015D0, This is the RequestContext argument of RegisterTraceGuidsW
-inline PVOID g_sub_75B8015D0_TraceGuidRequestContext = nullptr;
-
-// This is a copy of g_sub_75B8015D0_TraceGuidRequestContext, it is used in 3473 functions
-inline PVOID g_TraceGuidRequestContext = &g_sub_75B8015D0_TraceGuidRequestContext;
-
-inline __int64 __fastcall LoadLibraryWrapper(HMODULE* hLibrary, LPCWSTR lpLibFileName)
+inline __int64 __fastcall Trace_LoadLibraryWrapper(HMODULE* hLibrary, LPCWSTR lpLibFileName)
 {
 	HMODULE LibraryW; // rax
 	unsigned int UnknownLastError; // eax
 	unsigned int v6; // ebx
 	int v8; // [rsp+20h] [rbp-18h]
 
-	if (*&g_TraceGuidRequestContext != &g_TraceGuidRequestContext // Ida i swear...
-		&& (*(*&g_TraceGuidRequestContext + 28) & 4) != 0)
-		sub_75B8022FC(*(*&g_TraceGuidRequestContext + 16));
-
+	if (g_pTraceGuidRequestContext != &g_pTraceGuidRequestContext
+		&& (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 4) != 0)
+	{
+		sub_75B8022FC(g_pTraceGuidRequestContext->m_hTraceLoggerHandle);
+	}
 	LibraryW = LoadLibraryW(lpLibFileName);
 	*hLibrary = LibraryW;
 	if (LibraryW)
-		return 0;
+		return 0i64;
 	UnknownLastError = GetUnknownLastError();
 	v6 = UnknownLastError;
-	if (*&g_TraceGuidRequestContext != &g_TraceGuidRequestContext // *sigh*
-		&& (*(*&g_TraceGuidRequestContext + 28) & 1) != 0)
+	if (g_pTraceGuidRequestContext != &g_pTraceGuidRequestContext
+		&& (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) != 0)
 	{
 		v8 = UnknownLastError;
-		TraceMessageWrapper(*(*&g_TraceGuidRequestContext + 16), 0x15u, &g_WrapperGuid, lpLibFileName, v8);
+		Trace_TraceMessageWrapper(
+			g_pTraceGuidRequestContext->m_hTraceLoggerHandle,
+			0x15u,
+			&g_WrapperGuid,
+			lpLibFileName,
+			v8);
 	}
 	return v6;
 }
 
-inline LARGE_INTEGER QueryPerformanceFrequencyWrapper()
+inline LARGE_INTEGER Trace_QueryPerformanceFrequencyWrapper()
 {
 	signed int LastError; // eax
 	int v1; // r9d
 	LARGE_INTEGER Frequency; // [rsp+30h] [rbp+8h] BYREF
 
 	if (QueryPerformanceFrequency(&Frequency))
-	{
 		return Frequency;
-	}
-	else
+
+	LastError = GetLastError();
+	if (g_pTraceGuidRequestContext != &g_pTraceGuidRequestContext
+		&& (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) != 0)
 	{
-		LastError = GetLastError();
-		if (g_TraceGuidRequestContext != &g_TraceGuidRequestContext && (*(g_TraceGuidRequestContext + 28) & 1) != 0)
-		{
-			v1 = LastError | 0x80070000;
-			if (LastError <= 0)
-				v1 = LastError;
-			TraceMessageWrapper_0(*(g_TraceGuidRequestContext + 2), 0xAu, &g_WrapperGuid_0, v1);
-		}
-		return 1;
+		v1 = LastError | 0x80070000;
+		if (LastError <= 0)
+			v1 = LastError;
+		Trace_TraceMessageWrapper_0(g_pTraceGuidRequestContext->m_hTraceLoggerHandle,
+			0xAu, &g_WrapperGuid_0, v1);
 	}
+
+	return 1;
 }
 
 // SIG: MpClient.dll 48 85 C9 74 4D 48 89 4C 24 08 48 83 EC 28 48 8D 4C 24 30 FF 15 ?? ?? ?? ?? 85 C0 74 31 48 8B 0D ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 48 3B CA 74 1E F6 41 1C 01 74 18 48 8B 49 10 4C 8D 05 ?? ?? ?? ?? BA 1E 00 00 00 44 8B C8 E8 ?? ?? ?? ?? 48 83 C4 28 C3
-inline void __fastcall Trace_RpcSmDestroyClientContextWrapper(void *a1)
+inline void __fastcall Trace_RpcSmDestroyClientContextWrapper(void* a1)
 {
-  int v1; // eax
-  void *ContextHandle; // [rsp+30h] [rbp+8h] BYREF
+	int v1; // eax
+	void* ContextHandle; // [rsp+30h] [rbp+8h] BYREF
 
-  if ( a1 )
-  {
-    ContextHandle = a1;
-    v1 = RpcSmDestroyClientContext(&ContextHandle);
-    if ( v1 )
-    {
-      if ( g_TraceGuidRequestContext != &g_TraceGuidRequestContext && (*(g_TraceGuidRequestContext + 28) & 1) != 0 )
-        Trace_TraceMessageWrapper_0(*(g_TraceGuidRequestContext + 2), 0x1Eu, &stru_75B8A1820, v1);
-    }
-  }
+	if (a1)
+	{
+		ContextHandle = a1;
+		v1 = RpcSmDestroyClientContext(&ContextHandle);
+		if (v1)
+		{
+			if (g_pTraceGuidRequestContext != &g_pTraceGuidRequestContext
+				&& (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) != 0)
+			{
+				Trace_TraceMessageWrapper_0(g_pTraceGuidRequestContext->m_hTraceLoggerHandle, 
+					0x1Eu, &stru_75B8A1820, v1);
+			}
+		}
+	}
+}
+
+// SIG: MpClient.dll 48 89 5C 24 08 57 48 83 EC 30 48 8B 42
+__int64 __fastcall Trace_WaitForMultipleObjectsWrapper(__int64* a1, __int64 a2)
+{
+	__int64 result; // rax
+	DWORD v5; // eax
+	HANDLE Handles; // [rsp+20h] [rbp-18h] BYREF
+
+	if (!*(a2 + 8))
+		return 0x80070057;
+
+	Handles = *(a2 + 8);
+	v5 = WaitForMultipleObjects(1u, &Handles, 0, INFINITE);
+	switch (v5)
+	{
+	case 0u:
+		goto LABEL_9;
+	case 1u:
+		return 0x80004004;
+	case 0x80u:
+	LABEL_9:
+		result = 0i64;
+	LABEL_10:
+		if (result == 020000040004)
+			return result;
+		break;
+	case 0xFFFFFFFF:
+		result = GetUnknownLastError();
+		goto LABEL_10;
+	}
+	result = 0;
+	*a1 = a2;
+	return result;
 }
