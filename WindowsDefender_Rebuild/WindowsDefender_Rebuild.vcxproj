@@ -151,7 +151,8 @@
     <ClInclude Include="MorroCommon\CWin32.h" />
     <ClInclude Include="MpClient_dll\BuildNumber.h" />
     <ClInclude Include="MpClient_dll\CSharedHashCache.h" />
-    <ClInclude Include="MpClient_dll\Wrappers.h" />
+    <ClInclude Include="MpClient_dll\Trace.h" />
+    <ClInclude Include="MpClient_dll\TraceWrappers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

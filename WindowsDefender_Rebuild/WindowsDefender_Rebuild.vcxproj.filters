@@ -35,7 +35,10 @@
     <ClInclude Include="MorroCommon\CWin32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MpClient_dll\Wrappers.h">
+    <ClInclude Include="MpClient_dll\TraceWrappers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MpClient_dll\Trace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
