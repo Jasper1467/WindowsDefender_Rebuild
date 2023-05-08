@@ -29,10 +29,13 @@
     <ClInclude Include="AMMonitoringProvider_dll\CMalwareProviderDllModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AMMonitoringProvider_dll\MorroCommon\CPathUtils.h">
+    <ClInclude Include="MorroCommon\CPathUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AMMonitoringProvider_dll\MorroCommon\CWin32.h">
+    <ClInclude Include="MorroCommon\CWin32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MpClient_dll\Wrappers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
