@@ -172,3 +172,21 @@ inline LARGE_INTEGER QueryPerformanceFrequencyWrapper()
 		return 1;
 	}
 }
+
+// SIG: MpClient.dll 48 85 C9 74 4D 48 89 4C 24 08 48 83 EC 28 48 8D 4C 24 30 FF 15 ?? ?? ?? ?? 85 C0 74 31 48 8B 0D ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 48 3B CA 74 1E F6 41 1C 01 74 18 48 8B 49 10 4C 8D 05 ?? ?? ?? ?? BA 1E 00 00 00 44 8B C8 E8 ?? ?? ?? ?? 48 83 C4 28 C3
+inline void __fastcall Trace_RpcSmDestroyClientContextWrapper(void *a1)
+{
+  int v1; // eax
+  void *ContextHandle; // [rsp+30h] [rbp+8h] BYREF
+
+  if ( a1 )
+  {
+    ContextHandle = a1;
+    v1 = RpcSmDestroyClientContext(&ContextHandle);
+    if ( v1 )
+    {
+      if ( g_TraceGuidRequestContext != &g_TraceGuidRequestContext && (*(g_TraceGuidRequestContext + 28) & 1) != 0 )
+        Trace_TraceMessageWrapper_0(*(g_TraceGuidRequestContext + 2), 0x1Eu, &stru_75B8A1820, v1);
+    }
+  }
+}

@@ -41,5 +41,8 @@
     <ClInclude Include="MpClient_dll\Trace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MpClient_dll\CMpSampleHeaderContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

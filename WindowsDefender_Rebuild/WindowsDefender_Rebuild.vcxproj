@@ -150,6 +150,7 @@
     <ClInclude Include="MorroCommon\CPathUtils.h" />
     <ClInclude Include="MorroCommon\CWin32.h" />
     <ClInclude Include="MpClient_dll\BuildNumber.h" />
+    <ClInclude Include="MpClient_dll\CMpSampleHeaderContext.h" />
     <ClInclude Include="MpClient_dll\CSharedHashCache.h" />
     <ClInclude Include="MpClient_dll\Trace.h" />
     <ClInclude Include="MpClient_dll\TraceWrappers.h" />
