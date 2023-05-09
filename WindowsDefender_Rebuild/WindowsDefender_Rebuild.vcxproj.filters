@@ -50,5 +50,8 @@
     <ClInclude Include="MpClient_dll\TraceRequest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MorroCommon\LockFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
