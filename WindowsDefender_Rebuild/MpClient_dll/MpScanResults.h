@@ -44,21 +44,21 @@ inline __int64 __fastcall MpScanResult(__int64 a1, void* a2)
 	if (!a1)
 	{
 		if (v4 == g_pTraceGuidRequestContext || (v4->m_nTraceEnableFlags & 1) == 0)
-			return 0x80070057;
+			return E_INVALIDARG;
 		v5 = 27;
 
 		Trace_TraceMessageWrapper_1(v4->m_hTraceLoggerHandle, v5, &g_MpScanGuid);
-		return 0x80070057;
+		return E_INVALIDARG;
 	}
 	if (a1 == 2)
 	{
 		if (!a2)
 		{
 			if (v4 == g_pTraceGuidRequestContext || (v4->m_nTraceEnableFlags & 1) == 0)
-				return 0x80070057;
+				return E_INVALIDARG;
 			v5 = 29;
 			Trace_TraceMessageWrapper_1(v4->m_hTraceLoggerHandle, v5, &g_MpScanGuid);
-			return 0x80070057;
+			return E_INVALIDARG;
 		}
 
 		memset(a2, 0, 0x90ui64);
@@ -79,6 +79,5 @@ inline __int64 __fastcall MpScanResult(__int64 a1, void* a2)
 	if (v4 != g_pTraceGuidRequestContext && (v4->m_nTraceEnableFlags & 1) != 0)
 		Trace_TraceMessageWrapper_1(v4->m_hTraceLoggerHandle, 0x1Cu, &g_MpScanGuid);
 
-	return 0x80070006;
-
+	return E_HANDLE;
 }

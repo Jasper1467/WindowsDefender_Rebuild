@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="MpClient_dll\MpOfflineScanStatusQuery.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AMMonitoringProvider_dll\CMalwareProviderDllModule.h" />
@@ -153,7 +154,10 @@
     <ClInclude Include="MpClient_dll\BuildNumber.h" />
     <ClInclude Include="MpClient_dll\CMpSampleHeaderContext.h" />
     <ClInclude Include="MpClient_dll\CSharedHashCache.h" />
+    <ClInclude Include="MpClient_dll\MpQuarantineRequest.h" />
+    <ClInclude Include="MpClient_dll\MpScanControl.h" />
     <ClInclude Include="MpClient_dll\MpScanResults.h" />
+    <ClInclude Include="MpClient_dll\Services.h" />
     <ClInclude Include="MpClient_dll\Trace.h" />
     <ClInclude Include="MpClient_dll\TraceRequest.h" />
     <ClInclude Include="MpClient_dll\TraceWrappers.h" />

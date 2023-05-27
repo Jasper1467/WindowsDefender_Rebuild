@@ -4,6 +4,8 @@
 
 #include "TraceRequest.h"
 
+struct UnknownStruct_t;
+
 inline __int64 GetUnknownLastError()
 {
 	signed int LastError; // eax
@@ -15,7 +17,7 @@ inline __int64 GetUnknownLastError()
 		v1 = LastError;
 	if (v1 >= 0)
 
-		return 0x80004005;
+		return E_FAIL;
 
 	return v1;
 }
@@ -196,31 +198,40 @@ inline void __fastcall Trace_RpcSmDestroyClientContextWrapper(void* a1)
 			if (g_pTraceGuidRequestContext != &g_pTraceGuidRequestContext
 				&& (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) != 0)
 			{
-				Trace_TraceMessageWrapper_0(g_pTraceGuidRequestContext->m_hTraceLoggerHandle, 
+				Trace_TraceMessageWrapper_0(g_pTraceGuidRequestContext->m_hTraceLoggerHandle,
 					0x1Eu, &stru_75B8A1820, v1);
 			}
 		}
 	}
 }
 
+struct UnknownStruct_t
+{
+	int m_nUnknownInt;
+	HANDLE* m_pHandles;
+	char pad1[8];
+	CLIENT_CALL_RETURN* m_pClientCallReturn; // Seems to be only used for NdrClientCall3
+	// Unsure if there are more members
+};
+
 // SIG: MpClient.dll 48 89 5C 24 08 57 48 83 EC 30 48 8B 42
-__int64 __fastcall Trace_WaitForMultipleObjectsWrapper(__int64* a1, __int64 a2)
+inline __int64 __fastcall Trace_WaitForMultipleObjectsWrapper(__int64* a1, UnknownStruct_t* a2)
 {
 	__int64 result; // rax
 	DWORD v5; // eax
 	HANDLE Handles; // [rsp+20h] [rbp-18h] BYREF
 
-	if (!*(a2 + 8))
-		return 0x80070057;
+	if (!a2->m_pHandles)
+		return E_INVALIDARG;
 
-	Handles = *(a2 + 8);
+	Handles = a2->m_pHandles;
 	v5 = WaitForMultipleObjects(1u, &Handles, 0, INFINITE);
 	switch (v5)
 	{
 	case 0u:
 		goto LABEL_9;
 	case 1u:
-		return 0x80004004;
+		return E_ABORT;
 	case 0x80u:
 	LABEL_9:
 		result = 0i64;
@@ -235,4 +246,92 @@ __int64 __fastcall Trace_WaitForMultipleObjectsWrapper(__int64* a1, __int64 a2)
 	result = 0;
 	*a1 = a2;
 	return result;
+}
+
+/*
+ * .rdata:000000075B8A1980 stru_75B8A1980  dd 7FB7E4D7h            ; Data1
+ * .rdata:000000075B8A1980                                         ; DATA XREF: MpHandleClose+C8↑o
+ * .rdata:000000075B8A1980                                         ; MpHandleClose+110↑o ...
+ * .rdata:000000075B8A1980                 dw 0D37Ah               ; Data2
+ * .rdata:000000075B8A1980                 dw 3AF7h                ; Data3
+ * .rdata:000000075B8A1980                 db 36h, 0AAh, 28h, 89h, 0D5h, 0C7h, 31h, 4Dh; Data4
+ */
+inline GUID stru_75B8A1980 = GUID(
+	0x7FB7E4D7, // Data1
+	0x0D37A, // Data2
+	0x3AF7, // Data3
+	{ 0x36, 0x0AA, 0x28, 0x89, 0x0D5, 0x0C7, 0x31, 0x4D } // Data4
+);
+
+__int64 __fastcall EndMutex(UnknownStruct_t* a1, void* pReturnCall)
+{
+	__int64 v3; // ebx
+	UnknownStruct_t* v4; // rcx
+	HANDLE* m_pHandles; // rcx
+	UnknownStruct_t* v7; // [rsp+30h] [rbp+8h] BYREF
+
+	v7 = 0i64;
+	if (a1)
+		v3 = Trace_WaitForMultipleObjectsWrapper(&v7, a1);
+	else
+		v3 = E_INVALIDARG;
+	_mm_lfence();
+	if (v3 >= 0)
+	{
+		v4 = v7;
+		*pReturnCall = v7->m_pClientCallReturn;
+		m_pHandles = v4->m_pHandles;
+		if (m_pHandles)
+			ReleaseMutex(m_pHandles);
+	}
+	return v3;
+}
+
+__int64 __fastcall Trace_EndMutexWrapper(__int64 a1, __int64 a2, _QWORD* a3)
+{
+	int Pointer; // ebx
+	USHORT v7; // dx
+	int v9; // [rsp+20h] [rbp-38h]
+	int v10; // [rsp+60h] [rbp+8h] BYREF
+	__int64 v11; // [rsp+78h] [rbp+20h] BYREF
+
+	v10 = 0;
+	if (a1 && a2 && a3)
+	{
+		*a3 = 0i64;
+		Pointer = EndMutex(a1, &v11);
+		if (Pointer >= 0)
+		{
+			_mm_lfence();
+			v9 = *(a1 + 16);
+			Pointer = NdrClientCall3(&pProxyInfo, 0x25u, 0i64, v11, v9, a2, a3, &v10).Pointer;
+			if (v10)
+				Pointer = v10 | 0x80010000;
+			if (Pointer >= 0
+				|| g_pTraceGuidRequestContext == &g_pTraceGuidRequestContext
+				|| (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) == 0)
+			{
+				return Pointer;
+			}
+			v7 = 29;
+		}
+		else
+		{
+			if (g_pTraceGuidRequestContext == &g_pTraceGuidRequestContext
+				|| (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) == 0)
+			{
+				return Pointer;
+			}
+			v7 = 28;
+		}
+		_mm_lfence();
+		Trace_TraceMessageWrapper_0(g_pTraceGuidRequestContext->m_hTraceLoggerHandle, v7, &stru_75B8A1980, Pointer);
+		return Pointer;
+	}
+	if (g_pTraceGuidRequestContext != &g_pTraceGuidRequestContext
+		&& (g_pTraceGuidRequestContext->m_nTraceEnableFlags & 1) != 0)
+	{
+		Trace_TraceMessageWrapper_1(g_pTraceGuidRequestContext->m_hTraceLoggerHandle, 0x1Bu, &stru_75B8A1980);
+	}
+	return E_INVALIDARG;
 }
