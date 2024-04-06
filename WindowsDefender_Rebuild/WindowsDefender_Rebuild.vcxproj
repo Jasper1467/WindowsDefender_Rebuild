@@ -148,6 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AMMonitoringProvider_dll\CMalwareProviderDllModule.h" />
+    <ClInclude Include="MorroCommon\CCertCheck.h" />
     <ClInclude Include="MorroCommon\CPathUtils.h" />
     <ClInclude Include="MorroCommon\CWin32.h" />
     <ClInclude Include="MorroCommon\LockFile.h" />
